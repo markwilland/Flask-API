@@ -25,20 +25,43 @@ def api_all():
     
     return jsonify(all_books)
 
-@app.route('/api/v1/resources/referrals', methods=['GET'])
-def api_id():
-        print("@@@@@@@@@@@@@@@@@@@@@@@@@ " + str(request.args))
+@app.route('/api/v1/resources/referrals/<int:referral_id>', methods=['GET'])
+def api_id(referral_id):
+        print("Referal Id Provided: " + str(referral_id))
         
-        if 'id' in request.args:
-                id = int(request.args['id'])
-        else:
-                return "Error: No id field provided. Please specify an id."
+        if referral_id is None or referral_id == 0:
+                return jsonify({'message': 'Error: No id field provided. Please specify an id.'}), 400
         
-        results = []
         
-        for book in books:
-                if book['id'] == id:
-                        results.append(book)
+        conn = sqlite3.connect('referrals.db')
+        cur = conn.cursor()
+        
+        select_sql = '''SELECT * FROM referrals WHERE id = ?'''
+        
+        cur.execute(select_sql, (referral_id,))
+        
+        referral = cur.fetchone()
+        
+        conn.close()
+        
+        if referral is None:
+                return jsonify({'message': f'Referral with Id {referral_id} not found'}), 404
+        
+        referral_dict = {
+                'id': referral[0],
+                'firm_code': referral[1],
+                'file_type': referral[2],
+                'name': referral[3],
+                'email': referral[4],
+                'phone': referral[5],
+                'street_address_1': referral[6],
+                'street_address_2': referral[7],
+                'city': referral[8],
+                'province': referral[9],
+                'postal_code': referral[10]
+        }
+
+        return jsonify({'message': 'Referral found', 'referral': referral_dict})
                         
 @app.route('/api/v1/resources/referrals', methods=['POST'])
 def api_new():
