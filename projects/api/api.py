@@ -16,16 +16,16 @@ def dict_factory(cursor, row):
 def home():
         return "<h1>Distant Reading Archive</h1><p>This site is a prototype API for distant reading of science fiction novels.</p>"
 
-@app.route('/api/v1/resources/books/all', methods=['GET'])
+@app.route('/api/v1/resources/referrals/all', methods=['GET'])
 def api_all():
-    conn = sqlite3.connect('books.db')
+    conn = sqlite3.connect('referrals.db')
     conn.row_factory = dict_factory
     cur = conn.cursor()
-    all_books = cur.execute('SELECT * FROM books;').fetchall()
+    all_books = cur.execute('SELECT * FROM referrals;').fetchall()
     
     return jsonify(all_books)
 
-@app.route('/api/v1/resources/books', methods=['GET'])
+@app.route('/api/v1/resources/referrals', methods=['GET'])
 def api_id():
         print("@@@@@@@@@@@@@@@@@@@@@@@@@ " + str(request.args))
         
@@ -40,6 +40,44 @@ def api_id():
                 if book['id'] == id:
                         results.append(book)
                         
-        return jsonify(results)
+@app.route('/api/v1/resources/referrals', methods=['POST'])
+def api_new():
+        print("Post Request Incoming")
+        data = request.get_json()
+        print(data)
+        
+        conn = sqlite3.connect('referrals.db')
+        cur = conn.cursor()
+        
+        insert_statement = """
+                INSERT INTO referrals (firm_code, file_type, name, email, phone, street_address_1, street_address_2, city, province, postal_code)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""" 
+        
+        insert_data = (
+                data['firm_code'],
+                data['file_type'],
+                data['name'],
+                data['email'],
+                data['phone'],
+                data['street_address_1'],
+                data['street_address_2'],
+                data['city'],
+                data['province'],
+                data['postal_code']
+                )
+        print(insert_data)
+        
+        cur.execute(insert_statement, insert_data)
+        
+        referral_id = cur.lastrowid
+        
+        print(referral_id)
+        
+        conn.commit()
+        conn.close()
+
+        print("Record inserted")
+        
+        return jsonify({'message': 'Referral added successfully!', 'referral_id': referral_id})
 
 app.run()
