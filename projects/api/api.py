@@ -10,6 +10,7 @@ def dict_factory(cursor, row):
         
         for idx, col in enumerate(cursor.description):
                 d[col[0]] = row[idx]
+                
         return d
 
 @app.route('/', methods=['GET'])
@@ -17,16 +18,16 @@ def home():
         return "<h1>Distant Reading Archive</h1><p>This site is a prototype API for distant reading of science fiction novels.</p>"
 
 @app.route('/api/v1/resources/referrals/all', methods=['GET'])
-def api_all():
+def get_all_referrals():
     conn = sqlite3.connect('referrals.db')
     conn.row_factory = dict_factory
     cur = conn.cursor()
-    all_books = cur.execute('SELECT * FROM referrals;').fetchall()
+    referrals = cur.execute('SELECT * FROM referrals;').fetchall()
     
-    return jsonify(all_books)
+    return jsonify(referrals)
 
 @app.route('/api/v1/resources/referrals/<int:referral_id>', methods=['GET'])
-def api_id(referral_id):
+def get_referral_by_id(referral_id):
         print("Referal Id Provided: " + str(referral_id))
         
         if referral_id is None or referral_id == 0:
