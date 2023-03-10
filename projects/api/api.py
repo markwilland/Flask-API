@@ -5,6 +5,23 @@ import sqlite3
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
+def check_api_key():
+    api_key = request.headers.get('api_key')
+    
+    if not api_key:
+        return False, {'error': 'No API Key provided in the header!'}
+    
+    conn = sqlite3.connect('referrals.db')    
+    cur = conn.cursor()
+    cur.execute('SELECT * FROM api_keys WHERE key=?', (api_key,))
+    
+    key_data = cur.fetchone()
+    conn.close()
+    
+    if key_data:
+        return True, None
+    else:
+        return False, {'error': 'Invalid API Key'}
 
 def dict_factory(cursor, row):
     d = {}
@@ -70,6 +87,11 @@ def get_referral_by_id(referral_id):
 
 @app.route('/api/v1/resources/referrals', methods=['POST'])
 def api_new():
+    print(f'api key found?: {check_api_key()[0]} +    error message:  + {check_api_key()[1]}')
+    
+    if check_api_key()[0] == False:
+        return jsonify(check_api_key()[1])
+    
     print("Post Request Incoming")
     data = request.get_json()
     print(data)
@@ -107,6 +129,5 @@ def api_new():
     print("Record inserted")
 
     return jsonify({'message': 'Referral added successfully!', 'referral_id': referral_id})
-
 
 app.run()
